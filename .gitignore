@@ -1,0 +1,23 @@
+# Ignore executable files
+*.exe
+
+# Ignore temporary files
+*.tmp
+*.temp
+
+# Ignore object files
+*.o
+
+# Ignore compiled binaries
+*.out
+
+# Ignore core dumps
+core
+*.bin
+*.run
+*.x
+
+# Editor/IDE temp files
+*~
+*.swp
+*.bak

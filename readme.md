@@ -1,0 +1,1 @@
+This is a Garbage collector for C so you dont have to manually free() every malloc. The code is well documented and explined with comments.
