@@ -1,5 +1,3 @@
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include "mld.h"
@@ -404,7 +402,7 @@ mld_dump_object_rec_detail(object_db_rec_t *obj_rec){
                     printf("%s[%d]->%s = %f\n", obj_rec->struct_rec->struct_name, obj_index, field->fname, *(double *)(current_object_ptr + field->offset));
                     break;
                 case OBJ_PTR:
-                    printf("%s[%d]->%s = %p\n", obj_rec->struct_rec->struct_name, obj_index, field->fname,  (void *)*(int *)(current_object_ptr + field->offset));
+                    printf("%s[%d]->%s = %p\n", obj_rec->struct_rec->struct_name, obj_index, field->fname,  *(void **)(current_object_ptr + field->offset));
                     break;
                 case OBJ_STRUCT:
                     /*Later*/
