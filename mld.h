@@ -1,37 +1,6 @@
-/*
- * =====================================================================================
- *
- *       Filename:  mld.h
- *
- *    Description:  This file defines the data structures used for MLD tool
- *
- *        Version:  1.0
- *        Created:  Thursday 28 February 2019 05:14:18  IST
- *       Revision:  1.0
- *       Compiler:  gcc
- *
- *         Author:  Er. Abhishek Sagar, Networking Developer (AS), sachinites@gmail.com
- *        Company:  Brocade Communications(Jul 2012- Mar 2016), Current : Juniper Networks(Apr 2017 - Present)
- *        
- *        This file is part of the MLD distribution (https://github.com/sachinites).
- *        Copyright (c) 2017 Abhishek Sagar.
- *        This program is free software: you can redistribute it and/or modify
- *        it under the terms of the GNU General Public License as published by  
- *        the Free Software Foundation, version 3.
- *
- *        This program is distributed in the hope that it will be useful, but 
- *        WITHOUT ANY WARRANTY; without even the implied warranty of 
- *        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
- *        General Public License for more details.
- *
- *        You should have received a copy of the GNU General Public License 
- *        along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- * =====================================================================================
- */
-
 #ifndef __MLD__
 #include <assert.h>
+#include <string.h>
 
 /*Structure Data base Definition Begin*/
 
@@ -45,13 +14,22 @@ typedef enum {
     INT32,
     CHAR,
     OBJ_PTR,
+    VOID_PTR, /*New Data type added to identify void * pointers*/
     FLOAT,
     DOUBLE,
     OBJ_STRUCT
 } data_type_t;
 
+typedef enum{
+
+    MLD_FALSE,
+    MLD_TRUE
+} mld_boolean_t;
+
+
+
 #define OFFSETOF(struct_name, fld_name)     \
-    (unsigned int)&(((struct_name *)0)->fld_name)
+    (unsigned long)&(((struct_name *)0)->fld_name)
 
 #define FIELD_SIZE(struct_name, fld_name)   \
     sizeof(((struct_name *)0)->fld_name)
@@ -141,6 +119,8 @@ struct _object_db_rec_{
     void *ptr;
     unsigned int units;
     struct_db_rec_t *struct_rec;
+    mld_boolean_t is_visited; /*Used for Graph traversal*/
+    mld_boolean_t is_root;    /*Is this object is Root object*/
 };
 
 typedef struct _object_db_{
@@ -157,10 +137,31 @@ print_object_rec(object_db_rec_t *obj_rec, int i);
 void
 print_object_db(object_db_t *object_db);
 
-
-
 /*API to malloc the object*/
 void*
 xcalloc(object_db_t *object_db, char *struct_name, int units);
+
+/*APIs to register root objects*/
+void mld_register_root_object (object_db_t *object_db, 
+                               void *objptr, 
+                               char *struct_name, 
+                               unsigned int units);
+
+void
+set_mld_object_as_global_root(object_db_t *object_db, void *obj_ptr);
+
+
+/*APIs for MLD Algorithm*/
+void
+run_mld_algorithm(object_db_t *object_db);
+
+void
+report_leaked_objects(object_db_t *object_db);
+
+void
+mld_set_dynamic_object_as_root(object_db_t *object_db, void *obj_ptr);
+
+void 
+mld_init_primitive_data_types_support(struct_db_t *struct_db);
 
 #endif /* __MLD__ */
