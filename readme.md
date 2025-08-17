@@ -21,7 +21,7 @@ Its for educational purposes only!
 * [Basic Concepts](#basic-concepts)
   * [Struct Database](#struct-database)
   * [Object Database](#object-database)
-* [Limitations - Why dont we have one yet ?](#limitations)
+* [Limitations - Why no MLD can exist?](#limitations)
   
 
 ## Documentation Overview
@@ -230,50 +230,74 @@ typedef struct _object_db_{
 
 
 # Limitations
+At this point, one thing remains. So many bright minds in world, 
+why not use this method or something better to create a Memory leak detector in C ?
+Lets look at some scenerios first:
+
+## Case1: Storing Pointer in non-pointer Data types
+At the end of day, a numerical numbers which is holding some pointer address.
+```c
+struct str1{
+ char name[20];
+ unsigned int designation;
+}
+
+str1 var1;
+str1 var2;
+...
+var1.designation = var2;
+```
+
+As its just an int, our db will treat it as a number, even though it is holding an address to some space in memory.
+
+## Case2: Indirect refrence to objects.
+
+```c
+struct manager{
+ char name[20];
+ int fav_employee_age;
+}
+struct employee{
+ char name[20];
+ int age;
+}
+ ...
+`manager.fav_employee_age = employee.age; // indirect refrence.
+```
+
+## Case3: Embedded Objects.
+
+lets compare a struct in Java and C
+```Java
+class str1{
+    char name[32];
+     struct2 str2; // this is a refrence. Not embedded object
+}
+```
+
+But in C, you can do 
+
+```c
+struct str1{
+    char name[32];
+     struct2 str2; // embedded inside struct
+}.
+
+// or
+
+struct str1{
+    char name[32];
+     struct2 * str2; // this is a refrence. Not embedded object
+}
+```
+
+In java, as you dont have embedded objects,it makes garbage cleaning alot more easier.
+But in C, you have to hadnle cases, when a `xmalloc` can be an embedded object or just a refrence.
+
+## Case4: Cannot handle Unions
+Unions have a fized size = Size of largest element. Thus it is difficult to store them properly in our db's.
 
 
-
-
-
-
-
-
-
-
-
-
-
-This is an example of a Garbage Collector in C. SO you Dont have to manually manage memory.
-
-how this works, 
-it has two databases. struct database, and object db.
-first application must register all its structs in struct db
-and then store the objects (pointing to their corresponsing struct) in object db 
-
-then we use dfs to find nodes which are not reachable. They are leaked memory and must be removed.
-we use dfs traversal on nodes. And we use is_visited flag to avoid any loops.\
-
-
-here is an example
-
-struct 1
-
-struct 2
-
-register struct1
-register struct2
-
-obj1
-obj2
-
-add to db (obj1)
-add to db (obj2)
-
-mark obj1 global
-
-obj1. ptr = obj2
-
-run mld algo
 
 limitations
 
