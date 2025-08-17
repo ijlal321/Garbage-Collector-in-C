@@ -26,6 +26,7 @@ Its for educational purposes only!
   * [Case 2: Indirect Reference to Objects](#case-2-indirect-reference-to-objects)
   * [Case 3: Embedded Objects](#case-3-embedded-objects)
   * [Case 4: Cannot Handle Unions](#case-4-cannot-handle-unions)
+* [Example Output](#example-output)
 
   
 
@@ -257,7 +258,7 @@ var1.designation = var2;
 
 As its just an int, our db will treat it as a number, even though it is holding an address to some space in memory.
 
-## Case 2: Indirect Reference to Objects
+### Case 2: Indirect Reference to Objects
 
 ```c
 struct manager{
@@ -272,7 +273,7 @@ struct employee{
 `manager.fav_employee_age = employee.age; // indirect refrence.
 ```
 
-## Case 3: Embedded Objects
+### Case 3: Embedded Objects
 
 lets compare a struct in Java and C
 ```Java
@@ -301,10 +302,80 @@ struct str1{
 In java, as you dont have embedded objects,it makes garbage cleaning alot more easier.
 But in C, you have to hadnle cases, when a `xmalloc` can be an embedded object or just a refrence.
 
-## Case 4: Cannot Handle Unions
+### Case 4: Cannot Handle Unions
 Unions have a fized size = Size of largest element. Thus it is difficult to store them properly in our db's.
 
 
 
-limitations
+## Example Output
+
+```bash
+printing STRUCURE DATABASE
+No of Structures Registered = 5
+structure No : 0 (0x59dc4041b540)
+|------------------------------------------------------|
+| student_t            | size = 56       | #flds = 5   |
+|------------------------------------------------------|------------------------------------------------------------------------------------------|
+                       |0   stud_name            | dtype = CHAR            | size = 32    | offset = 0     |  nstructname = 0                     |
+                       |--------------------------------------------------------------------------------------------------------------------------|
+                       |1   rollno               | dtype = UINT32          | size = 4     | offset = 32    |  nstructname = 0                     |
+                       |--------------------------------------------------------------------------------------------------------------------------|
+                       |2   age                  | dtype = UINT32          | size = 4     | offset = 36    |  nstructname = 0                     |
+                       |--------------------------------------------------------------------------------------------------------------------------|
+                       |3   aggregate            | dtype = FLOAT           | size = 4     | offset = 40    |  nstructname = 0                     |
+                       |--------------------------------------------------------------------------------------------------------------------------|
+                       |4   best_colleage        | dtype = OBJ_PTR         | size = 8     | offset = 48    |  nstructname = student_t             |
+                       |--------------------------------------------------------------------------------------------------------------------------|
+structure No : 1 (0x59dc4041b4a0)
+|------------------------------------------------------|
+| emp_t                | size = 64       | #flds = 6   |
+|------------------------------------------------------|------------------------------------------------------------------------------------------|
+                       |0   emp_name             | dtype = CHAR            | size = 30    | offset = 0     |  nstructname = 0                     |
+                       |--------------------------------------------------------------------------------------------------------------------------|
+                       |1   emp_id               | dtype = UINT32          | size = 4     | offset = 32    |  nstructname = 0                     |
+                       |--------------------------------------------------------------------------------------------------------------------------|
+                       |2   age                  | dtype = UINT32          | size = 4     | offset = 36    |  nstructname = 0                     |
+                       |--------------------------------------------------------------------------------------------------------------------------|
+                       |3   mgr                  | dtype = OBJ_PTR         | size = 8     | offset = 40    |  nstructname = emp_t                 |
+                       |--------------------------------------------------------------------------------------------------------------------------|
+                       |4   salary               | dtype = FLOAT           | size = 4     | offset = 48    |  nstructname = 0                     |
+                       |--------------------------------------------------------------------------------------------------------------------------|
+                       |5   p                    | dtype = OBJ_PTR         | size = 8     | offset = 56    |  nstructname = 0                     |
+                       |--------------------------------------------------------------------------------------------------------------------------|
+structure No : 2 (0x59dc4041b400)
+|------------------------------------------------------|
+| double               | size = 8        | #flds = 0   |
+|------------------------------------------------------|------------------------------------------------------------------------------------------|
+structure No : 3 (0x59dc4041b360)
+|------------------------------------------------------|
+| float                | size = 4        | #flds = 0   |
+|------------------------------------------------------|------------------------------------------------------------------------------------------|
+structure No : 4 (0x59dc4041b2c0)
+|------------------------------------------------------|
+| int                  | size = 4        | #flds = 0   |
+|------------------------------------------------------|------------------------------------------------------------------------------------------|
+Printing OBJECT DATABASE
+-----------------------------------------------------------------------------------------------------|
+0   ptr = 0x59dc4041bbb0 | next = 0x59dc4041bb80 | units = 1    | struct_name = int        | is_root = FALSE |
+-----------------------------------------------------------------------------------------------------|
+-----------------------------------------------------------------------------------------------------|
+1   ptr = 0x59dc4041baf0 | next = 0x59dc4041bac0 | units = 2    | struct_name = emp_t      | is_root = TRUE  |
+-----------------------------------------------------------------------------------------------------|
+-----------------------------------------------------------------------------------------------------|
+2   ptr = 0x59dc4041ba80 | next = 0x59dc4041ba50 | units = 1    | struct_name = student_t  | is_root = FALSE |
+-----------------------------------------------------------------------------------------------------|
+-----------------------------------------------------------------------------------------------------|
+3   ptr = 0x59dc4041ba10 | next = (nil)      | units = 1    | struct_name = student_t  | is_root = TRUE  |
+-----------------------------------------------------------------------------------------------------|
+Leaked Objects : 
+Dumping Leaked Objects
+-----------------------------------------------------------------------------------------------------|
+0   ptr = 0x59dc4041ba80 | next = 0x59dc4041ba50 | units = 1    | struct_name = student_t  | is_root = FALSE |
+-----------------------------------------------------------------------------------------------------|
+student_t[0]->stud_name = shivani
+student_t[0]->rollno = 0
+student_t[0]->age = 0
+student_t[0]->aggregate = 0.000000
+student_t[0]->best_colleage = (nil)
+```
 
