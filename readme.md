@@ -22,6 +22,11 @@ Its for educational purposes only!
   * [Struct Database](#struct-database)
   * [Object Database](#object-database)
 * [Limitations - Why no MLD can exist?](#limitations)
+  * [Case1: Storing Pointer in non-pointer Data types](#Case1:-Storing-Pointer-in-non-pointer-Data-types)
+  * [Case2: Indirect refrence to objects]
+  * [Case3: Embedded Objects]
+  * [Case4: Cannot handle Unions]
+  * 
   
 
 ## Documentation Overview
