@@ -46,390 +46,196 @@ Its for educational purposes only!
 
 ### Download, compile and test
 
-    $ git clone https://github.com/ijlal321/Garbage-Collector-in-C
-    $ cd gc
+    $ git clone https://github.com/ijlal321/Memory-Leak-Detector-in-C
+    $ cd Memory-Leak-Detector-in-C
     
-To compile using the `clang` compiler:
+To compile, you can use:
 
-    $ make test
+    $ make 
     
-To use the GNU Compiler Collection (GCC):
+To clean the files
 
-    $ make test CC=gcc
+    $ make clean
     
-The tests should complete successfully. To create the current coverage report:
-
-    $ make coverage
-
-
 ### Basic usage
 
+For Basic Usage, you can refer `app.c` which shows how to use this
 ```c
 ...
-#include "gc.h"
+#include "MLD.h"
 ...
 
 
-void some_fun() {
+int main(int argc, char* argv[]) {
     ...
-    int* my_array = gc_calloc(&gc, 1024, sizeof(int));
-    for (size_t i=0; i<1024; ++i) {
-        my_array[i] = 42;
-    }
+    /*Step 1 : Initialize a new structure database */
+    struct_db_t *struct_db = calloc(1, sizeof(struct_db_t));
+    mld_init_primitive_data_types_support(struct_db); // Optional
+        
+    /*Step 2 : Create structure record for structure emp_t*/
+    static field_info_t emp_fields[] = {
+        FIELD_INFO(emp_t, emp_name, CHAR,    0),
+        FIELD_INFO(emp_t, emp_id,   UINT32,  0),
+        FIELD_INFO(emp_t, age,      UINT32,  0),
+        FIELD_INFO(emp_t, mgr,      OBJ_PTR, emp_t),
+        FIELD_INFO(emp_t, salary,   FLOAT, 0),
+        FIELD_INFO(emp_t, p, OBJ_PTR, 0)
+    };
+    /*Step 3 : Register the structure in structure database*/
+    REG_STRUCT(struct_db, emp_t, emp_fields);
+
+    /*Working with object database*/
+    /*Step 1 : Initialize a new Object database */
+    object_db_t *object_db = calloc(1, sizeof(object_db_t));
+    object_db->struct_db = struct_db;
+    
+    /*Step 2 : Create some sample objects, equivalent to standard 
+     * calloc(1, sizeof(student_t))*/
+    student_t *abhishek = xcalloc(object_db, "student_t", 1);
+    mld_set_dynamic_object_as_root(object_db, abhishek);
+
+    student_t *shivani = xcalloc(object_db, "student_t", 1);
+    strncpy(shivani->stud_name, "shivani", strlen("shivani")+1);
+    // abhishek->best_colleage = shivani;
+
     ...
-    // look ma, no free!
+
+    run_mld_algorithm(object_db);
+    printf("Leaked Objects : \n");
+    report_leaked_objects(object_db);
+
+    // look here, all leaked memory
 }
 
-int main(int argc, char* argv[]) {
-    gc_start(&gc, &argc);
-    ...
-    some_fun();
-    ...
-    gc_stop(&gc);
-    return 0;
-}
 ```
 
 ## Core API
 
-This describes the core API, see `gc.h` for more details and the low-level API.
+This describes the core API, see `MLD.h` for more details and the low-level API.
 
-### Starting, stopping, pausing, resuming and running GC
+### Init Struct Database and Register Structs
 
-In order to initialize and start garbage collection, use the `gc_start()`
-function and pass a *bottom-of-stack* address:
-
+In order to initialize and Memory Leak Detector, first we need to initialize our `struct database`.
 ```c
-void gc_start(GarbageCollector* gc, void* bos);
+struct_db_t *struct_db = calloc(1, sizeof(struct_db_t));
 ```
 
-The bottom-of-stack parameter `bos` needs to point to a stack-allocated
-variable and marks the low end of the stack from where [root
-finding](#root-finding) (scanning) starts. 
-
-Garbage collection can be stopped, paused and resumed with
-
+Now time to register a struct in this database.
 ```c
-void gc_stop(GarbageCollector* gc);
-void gc_pause(GarbageCollector* gc);
-void gc_resume(GarbageCollector* gc);
-```
+typedef struct emp_ {
 
-and manual garbage collection can be triggered with
+    char emp_name[30];
+    unsigned int emp_id;
+    unsigned int age;
+    struct emp_ *mgr;
+    float salary;
+    int *p;
+} emp_t;
 
-```c
-size_t gc_run(GarbageCollector* gc);
-```
-
-### Memory allocation and deallocation
-
-`gc` supports `malloc()`, `calloc()`and `realloc()`-style memory allocation.
-The respective function signatures mimick the POSIX functions (with the
-exception that we need to pass the garbage collector along as the first
-argument):
-
-```c
-void* gc_malloc(GarbageCollector* gc, size_t size);
-void* gc_calloc(GarbageCollector* gc, size_t count, size_t size);
-void* gc_realloc(GarbageCollector* gc, void* ptr, size_t size);
-```
-
-It is possible to pass a pointer to a destructor function through the
-extended interface:
-
-```c
-void* dtor(void* obj) {
-   // do some cleanup work
-   obj->parent->deregister();
-   obj->db->disconnect()
-   ...
-   // no need to free obj
-}
 ...
-SomeObject* obj = gc_malloc_ext(gc, sizeof(SomeObject), dtor);
-...
-``` 
 
-`gc` supports static allocations that are garbage collected only when the
-GC shuts down via `gc_stop()`. Just use the appropriate helper function:
-
-```c
-void* gc_malloc_static(GarbageCollector* gc, size_t size, void (*dtor)(void*));
+ static field_info_t emp_fields[] = {
+     FIELD_INFO(emp_t, emp_name, CHAR,    0),
+     FIELD_INFO(emp_t, emp_id,   UINT32,  0),
+     FIELD_INFO(emp_t, age,      UINT32,  0),
+     FIELD_INFO(emp_t, mgr,      OBJ_PTR, emp_t),
+     FIELD_INFO(emp_t, salary,   FLOAT, 0),
+     FIELD_INFO(emp_t, p, OBJ_PTR, 0)
+ };
+ /*Register the structure in structure database*/
+ REG_STRUCT(struct_db, emp_t, emp_fields);
 ```
 
-Static allocation expects a pointer to a finalization function; just set to
-`NULL` if finalization is not required.
+### Init Object database and storing Objects
 
-Note that `gc` currently does not guarantee a specific ordering when it
-collects static variables, If static vars need to be deallocated in a
-particular order, the user should call `gc_free()` on them in the desired
-sequence prior to calling `gc_stop()`, see below.
-
-It is also possible to trigger explicit memory deallocation using 
-
+Initialize our `object database` which will store all of our objects.
 ```c
-void gc_free(GarbageCollector* gc, void* ptr);
+    object_db_t *object_db = calloc(1, sizeof(object_db_t));
+    object_db->struct_db = struct_db;
 ```
 
-Calling `gc_free()` is guaranteed to (a) finalize/destruct on the object
-pointed to by `ptr` if applicable and (b) to free the memory that `ptr` points to
-irrespective of the current scheduling for garbage collection and will also
-work if GC has been paused using `gc_pause()` above.
-
-
-### Helper functions
-
-`gc` also offers a `strdup()` implementation that returns a garbage-collected
-copy:
-
+Now time to add a object in this database.
+An object can be set as `root` or `non root`. Root meaning it is the head and always exist on its own.
+Non root means it exist inside another object, as a pointer. Like `Object1.some_ptr = Object2`.
 ```c
-char* gc_strdup (GarbageCollector* gc, const char* s);
+    student_t *abhishek = xcalloc(object_db, "student_t", 1);
+    mld_set_dynamic_object_as_root(object_db, abhishek);
 ```
 
+### Running Algorithm at demand
+```c
+    run_mld_algorithm(object_db);
+    printf("Leaked Objects : \n");
+    report_leaked_objects(object_db);
+```
 
 ## Basic Concepts
 
-The fundamental idea behind garbage collection is to automate the memory
-allocation/deallocation cycle. This is accomplished by keeping track of all
-allocated memory and periodically triggering deallocation for memory that is
-still allocated but [unreachable](#reachability).
+The fundamental idea behind Memory Leak detector is to automate the capture of memory leaks.
+This is accomplished by keeping track of all the objects created. And then filter 
+all objects what are not root, and cant be reached even from any root objects.
+Thus give you the simulation of a Memory Lead Detector.
 
-Many advanced garbage collectors also implement their own approach to memory
-allocation (i.e. replace `malloc()`). This often enables them to layout memory
-in a more space-efficient manner or for faster access but comes at the price of
-architecture-specific implementations and increased complexity. `gc` sidesteps
-these issues by falling back on the POSIX `*alloc()` implementations and keeping
-memory management and garbage collection metadata separate. This makes `gc`
-much simpler to understand but, of course, also less space- and time-efficient
-than more optimized approaches.
+We have 2 databases here. One is for storing all the structs information. Other is for storing multiple Objects.
 
-### Data Structures
+We use `is_visited` to check for cycles. Making sure our program dont stuck in an infinite loop.
+Better algorithms can be applied for leaked detection. PR is always appreciated in such scenerios 🙏.
 
-The core data structure inside `gc` is a hash map that maps the address of
-allocated memory to the garbage collection metadata of that memory:
-
-The items in the hash map are allocations, modeled with the `Allocation`
-`struct`:
-
+### Struct Database
 ```c
-typedef struct Allocation {
-    void* ptr;                // mem pointer
-    size_t size;              // allocated size in bytes
-    char tag;                 // the tag for mark-and-sweep
-    void (*dtor)(void*);      // destructor
-    struct Allocation* next;  // separate chaining
-} Allocation;
+typedef struct _field_info_{
+    char fname [MAX_FIELD_NAME_SIZE];   /*Name of the field*/
+    data_type_t dtype;                  /*Data type of the field*/
+    unsigned int size;                  /*Size of the field*/
+    unsigned int offset;                /*Offset of the field*/
+    // Below field is meaningful only if dtype = OBJ_PTR, Or OBJ_STRUCT
+    char nested_str_name[MAX_STRUCTURE_NAME_SIZE];
+} field_info_t;
+
+/*Structure to store the information of one C structure
+ * which could have 'n_fields' fields*/
+struct _struct_db_rec_{
+    struct_db_rec_t *next;  /*Pointer to the next structure in the linked list*/
+    char struct_name [MAX_STRUCTURE_NAME_SIZE];  // key
+    unsigned int ds_size;   /*Size of the structure*/
+    unsigned int n_fields;  /*No of fields in the structure*/
+    field_info_t *fields;   /*pointer to the array of fields*/
+};
+
+/*Finally the head of the linked list representing the structure
+ * database*/
+typedef struct _struct_db_{
+    struct_db_rec_t *head;
+    unsigned int count;
+} struct_db_t;
 ```
 
-Each `Allocation` instance holds a pointer to the allocated memory, the size of
-the allocated memory at that location, a tag for mark-and-sweep (see below), an
-optional pointer to the destructor function and a pointer to the next
-`Allocation` instance (for separate chaining, see below).
-
-The allocations are collected in an `AllocationMap` 
+### Object Database
 
 ```c
-typedef struct AllocationMap {
-    size_t capacity;
-    size_t min_capacity;
-    double downsize_factor;
-    double upsize_factor;
-    double sweep_factor;
-    size_t sweep_limit;
-    size_t size;
-    Allocation** allocs;
-} AllocationMap;
+/*Object Database structure definitions Starts here*/
+
+typedef struct _object_db_rec_ object_db_rec_t;
+
+struct _object_db_rec_{
+    object_db_rec_t *next;
+    void *ptr;
+    unsigned int units;
+    struct_db_rec_t *struct_rec;
+    mld_boolean_t is_visited; /*Used for Graph traversal*/
+    mld_boolean_t is_root;    /*Is this object is Root object*/
+};
+
+typedef struct _object_db_{
+    struct_db_t *struct_db;
+    object_db_rec_t *head;
+    unsigned int count;
+} object_db_t;
+
 ```
 
-that, together with a set of `static` functions inside `gc.c`, provides hash
-map semantics for the implementation of the public API.
 
-The `AllocationMap` is the central data structure in the `GarbageCollector`
-struct which is part of the public API:
-
-```c
-typedef struct GarbageCollector {
-    struct AllocationMap* allocs;
-    bool paused;
-    void *bos;
-    size_t min_size;
-} GarbageCollector;
-```
-
-With the basic data structures in place, any `gc_*alloc()` memory allocation
-request is a two-step procedure: first, allocate the memory through system (i.e.
-standard `malloc()`) functionality and second, add or update the associated
-metadata to the hash map.
-
-For `gc_free()`, use the pointer to locate the metadata in the hash map,
-determine if the deallocation requires a destructor call, call if required,
-free the managed memory and delete the metadata entry from the hash map.
-
-These data structures and the associated interfaces enable the
-management of the metadata required to build a garbage collector.
-
-
-### Garbage collection
-
-`gc` triggers collection under two circumstances: (a) when any of the calls to
-the system allocation fail (in the hope to deallocate sufficient memory to
-fulfill the current request); and (b) when the number of entries in the hash
-map passes a dynamically adjusted high water mark.
-
-If either of these cases occurs, `gc` stops the world and starts a
-mark-and-sweep garbage collection run over all current allocations. This
-functionality is implemented in the `gc_run()` function which is part of the
-public API and delegates all work to the `gc_mark()` and `gc_sweep()` functions
-that are part of the private API.
-
-`gc_mark()` has the task of [finding roots](#finding-roots) and tagging all
-known allocations that are referenced from a root (or from an allocation that
-is referenced from a root, i.e. transitively) as "used". Once the marking of
-is completed, `gc_sweep()` iterates over all known allocations and
-deallocates all unused (i.e. unmarked) allocations, returns to `gc_run()` and
-the world continues to run.
-
-
-### Reachability
-
-`gc` will keep memory allocations that are *reachable* and collect everything
-else. An allocation is considered reachable if any of the following is true:
-
-1. There is a pointer on the stack that points to the allocation content.
-   The pointer must reside in a stack frame that is at least as deep in the call
-   stack as the bottom-of-stack variable passed to `gc_start()` (i.e. `bos` is
-   the smallest stack address considered during the mark phase).
-2. There is a pointer inside `gc_*alloc()`-allocated content that points to the
-   allocation content.
-3. The allocation is tagged with `GC_TAG_ROOT`.
-
-
-### The Mark-and-Sweep Algorithm
-
-The naïve mark-and-sweep algorithm runs in two stages. First, in a *mark*
-stage, the algorithm finds and marks all *root* allocations and all allocations
-that are reachable from the roots.  Second, in the *sweep* stage, the algorithm
-passes over all known allocations, collecting all allocations that were not
-marked and are therefore deemed unreachable.
-
-### Finding roots
-
-At the beginning of the *mark* stage, we first sweep across all known
-allocations and find explicit roots with the `GC_TAG_ROOT` tag set.
-Each of these roots is a starting point for [depth-first recursive
-marking](#depth-first-recursive-marking).
-
-`gc` subsequently detects all roots in the stack (starting from the bottom-of-stack
-pointer `bos` that is passed to `gc_start()`) and the registers (by [dumping them
-on the stack](#dumping-registers-on-the-stack) prior to the mark phase) and
-uses these as starting points for marking as well.
-
-### Depth-first recursive marking
-
-Given a root allocation, marking consists of (1) setting the `tag` field in an
-`Allocation` object to `GC_TAG_MARK` and (2) scanning the allocated memory for
-pointers to known allocations, recursively repeating the process.
-
-The underlying implementation is a simple, recursive depth-first search that
-scans over all memory content to find potential references:
-
-```c
-void gc_mark_alloc(GarbageCollector* gc, void* ptr)
-{
-    Allocation* alloc = gc_allocation_map_get(gc->allocs, ptr);
-    if (alloc && !(alloc->tag & GC_TAG_MARK)) {
-        alloc->tag |= GC_TAG_MARK;
-        for (char* p = (char*) alloc->ptr;
-             p < (char*) alloc->ptr + alloc->size;
-             ++p) {
-            gc_mark_alloc(gc, *(void**)p);
-        }
-    }
-}
-```
-
-In `gc.c`, `gc_mark()` starts the marking process by marking the
-known roots on the stack via a call to `gc_mark_roots()`. To mark the roots we
-do one full pass through all known allocations. We then proceed to dump the
-registers on the stack.
-
-
-### Dumping registers on the stack
-
-In order to make the CPU register contents available for root finding, `gc`
-dumps them on the stack. This is implemented in a somewhat portable way using
-`setjmp()`, which stores them in a `jmp_buf` variable right before we mark the
-stack:
-
-```c
-...
-/* Dump registers onto stack and scan the stack */
-void (*volatile _mark_stack)(GarbageCollector*) = gc_mark_stack;
-jmp_buf ctx;
-memset(&ctx, 0, sizeof(jmp_buf));
-setjmp(ctx);
-_mark_stack(gc);
-...
-```
-
-The detour using the `volatile` function pointer `_mark_stack` to the
-`gc_mark_stack()` function is necessary to avoid the inlining of the call to
-`gc_mark_stack()`.
-
-
-### Sweeping
-
-After marking all memory that is reachable and therefore potentially still in
-use, collecting the unreachable allocations is trivial. Here is the
-implementation from `gc_sweep()`:
-
-```c
-size_t gc_sweep(GarbageCollector* gc)
-{
-    size_t total = 0;
-    for (size_t i = 0; i < gc->allocs->capacity; ++i) {
-        Allocation* chunk = gc->allocs->allocs[i];
-        Allocation* next = NULL;
-        while (chunk) {
-            if (chunk->tag & GC_TAG_MARK) {
-                /* unmark */
-                chunk->tag &= ~GC_TAG_MARK;
-                chunk = chunk->next;
-            } else {
-                total += chunk->size;
-                if (chunk->dtor) {
-                    chunk->dtor(chunk->ptr);
-                }
-                free(chunk->ptr);
-                next = chunk->next;
-                gc_allocation_map_remove(gc->allocs, chunk->ptr, false);
-                chunk = next;
-            }
-        }
-    }
-    gc_allocation_map_resize_to_fit(gc->allocs);
-    return total;
-}
-```
-
-We iterate over all allocations in the hash map (the `for` loop), following every
-chain (the `while` loop with the `chunk = chunk->next` update) and either (1)
-unmark the chunk if it was marked; or (2) call the destructor on the chunk and
-free the memory if it was not marked, keeping a running total of the amount of
-memory we free.
-
-That concludes the mark & sweep run. The stopped world is resumed and we're
-ready for the next run!
-
-
-
-[naive_mas]: https://en.wikipedia.org/wiki/Tracing_garbage_collection#Naïve_mark-and-sweep
-[boehm]: https://www.hboehm.info/gc/ 
-[stutter]: https://github.com/mkirchner/stutter
-[tgc]: https://github.com/orangeduck/tgc
-[garbage_collection_handbook]: https://amzn.to/2VdEvjC
-
-
+# Limitations
 
 
 
