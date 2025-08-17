@@ -21,12 +21,12 @@ Its for educational purposes only!
 * [Basic Concepts](#basic-concepts)
   * [Struct Database](#struct-database)
   * [Object Database](#object-database)
-* [Limitations - Why no MLD can exist?](#limitations)
-  * [Case1: Storing Pointer in non-pointer Data types](#Case1:-Storing-Pointer-in-non-pointer-Data-types)
-  * [Case2: Indirect refrence to objects]
-  * [Case3: Embedded Objects]
-  * [Case4: Cannot handle Unions]
-  * 
+* [Limitations – Why No MLD Can Exist?](#limitations--why-no-mld-can-exist)
+  * [Case 1: Storing Pointer in Non-Pointer Data Types](#case-1-storing-pointer-in-non-pointer-data-types)
+  * [Case 2: Indirect Reference to Objects](#case-2-indirect-reference-to-objects)
+  * [Case 3: Embedded Objects](#case-3-embedded-objects)
+  * [Case 4: Cannot Handle Unions](#case-4-cannot-handle-unions)
+
   
 
 ## Documentation Overview
@@ -234,12 +234,12 @@ typedef struct _object_db_{
 ```
 
 
-# Limitations
+## Limitations – Why No MLD Can Exist?
 At this point, one thing remains. So many bright minds in world, 
 why not use this method or something better to create a Memory leak detector in C ?
 Lets look at some scenerios first:
 
-## Case1: Storing Pointer in non-pointer Data types
+### Case 1: Storing Pointer in Non-Pointer Data Types
 At the end of day, a numerical numbers which is holding some pointer address.
 ```c
 struct str1{
@@ -255,7 +255,7 @@ var1.designation = var2;
 
 As its just an int, our db will treat it as a number, even though it is holding an address to some space in memory.
 
-## Case2: Indirect refrence to objects.
+## Case 2: Indirect Reference to Objects
 
 ```c
 struct manager{
@@ -270,7 +270,7 @@ struct employee{
 `manager.fav_employee_age = employee.age; // indirect refrence.
 ```
 
-## Case3: Embedded Objects.
+## Case 3: Embedded Objects
 
 lets compare a struct in Java and C
 ```Java
@@ -299,7 +299,7 @@ struct str1{
 In java, as you dont have embedded objects,it makes garbage cleaning alot more easier.
 But in C, you have to hadnle cases, when a `xmalloc` can be an embedded object or just a refrence.
 
-## Case4: Cannot handle Unions
+## Case 4: Cannot Handle Unions
 Unions have a fized size = Size of largest element. Thus it is difficult to store them properly in our db's.
 
 
