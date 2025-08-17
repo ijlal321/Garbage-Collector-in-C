@@ -18,7 +18,7 @@ Its for educational purposes only!
 * [Core API](#core-api)
   * [Init Struct Database and Register Structs](#init-struct-database-and-register-structs)
   * [Init Object database and storing Objects](#init-object-database-and-storing-objects)
-* [Basic Concepts](#basic-concepts)
+* [Basic Concepts With ILLUSTRATIONS](#basic-concepts)
   * [Struct Database](#struct-database)
   * [Object Database](#object-database)
 * [Limitations – Why No MLD Can Exist?](#limitations--why-no-mld-can-exist)
@@ -179,6 +179,8 @@ We have 2 databases here. One is for storing all the structs information. Other 
 
 We use `is_visited` to check for cycles. Making sure our program dont stuck in an infinite loop.
 Better algorithms can be applied for leaked detection. PR is always appreciated in such scenerios 🙏.
+
+<img width="4042" height="1869" alt="image" src="https://github.com/user-attachments/assets/77a3a1de-61e2-43c8-97f2-eaf1157cd7c5" />
 
 ### Struct Database
 ```c
