@@ -14,21 +14,15 @@ Its for educational purposes only!
 * [Table of contents](#table-of-contents)
 * [Documentation Overview](#documentation-overview)
 * [Quickstart](#quickstart)
-  * [Download and test](#download-and-test)
   * [Basic usage](#basic-usage)
 * [Core API](#core-api)
-  * [Starting, stopping, pausing, resuming and running GC](#starting-stopping-pausing-resuming-and-running-gc)
-  * [Memory allocation and deallocation](#memory-allocation-and-deallocation)
-  * [Helper functions](#helper-functions)
+  * [Init Struct Database and Register Structs](#init-struct-database-and-register-structs)
+  * [Init Object database and storing Objects](#init-object-database-and-storing-objects)
 * [Basic Concepts](#basic-concepts)
-  * [Data Structures](#data-structures)
-  * [Garbage collection](#garbage-collection)
-  * [Reachability](#reachability)
-  * [The Mark-and-Sweep Algorithm](#the-mark-and-sweep-algorithm)
-  * [Finding roots](#finding-roots)
-  * [Depth-first recursive marking](#depth-first-recursive-marking)
-  * [Dumping registers on the stack](#dumping-registers-on-the-stack)
-  * [Sweeping](#sweeping)
+  * [Struct Database](#struct-database)
+  * [Object Database](#object-database)
+* [Limitations](#limitations)
+  
 
 ## Documentation Overview
 
